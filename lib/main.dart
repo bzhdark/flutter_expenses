@@ -12,8 +12,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mes dépenses',
       theme: ThemeData(
-        primarySwatch: Colors.teal,
-        accentColor: Colors.orangeAccent,
+        primarySwatch: Colors.purple,
+        accentColor: Colors.amber,
         fontFamily: "Quicksand",
         textTheme: ThemeData.light().textTheme.copyWith(
               title: TextStyle(
@@ -46,11 +46,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Transaction> _userTransactions = [
-    // Transaction(
-    //     id: "t1", title: "New shoes", amount: 69.99, date: DateTime.now()),
-    // Transaction(
-    //     id: "t2", title: "Les courses", amount: 29.99, date: DateTime.now()),
+    Transaction(
+        id: "t1",
+        title: "New shoes",
+        amount: 69.99,
+        date: DateTime.now().subtract(Duration(days: 1))),
+    Transaction(
+        id: "t2", title: "Les courses", amount: 29.99, date: DateTime.now()),
+    Transaction(
+        id: "t3", title: "Les courses", amount: 29.99, date: DateTime.now()),
+    Transaction(
+        id: "t4", title: "Les courses", amount: 29.99, date: DateTime.now()),
+    Transaction(
+        id: "t5", title: "Les courses", amount: 29.99, date: DateTime.now()),
   ];
+
+  bool _showChart = false;
 
   List<Transaction> get _recentTransactions {
     return _userTransactions
@@ -88,33 +99,74 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final isLandscape = mq.orientation == Orientation.landscape;
+    final appBar = AppBar(
+      title: Text('Mes dépenses'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => _startAddNewTransaction(context),
+        ),
+      ],
+    );
+
+    final txListWidget = Container(
+      height: (mq.size.height - appBar.preferredSize.height - mq.padding.top) *
+          0.75,
+      child: TransactionList(_userTransactions, _deleteTransaction),
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mes dépenses'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _startAddNewTransaction(context),
-          )
-        ],
-      ),
+      appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
-          // mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              child: Chart(_recentTransactions),
-            ),
-            TransactionList(_userTransactions, _deleteTransaction)
+            if (isLandscape)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('Show chart'),
+                  Switch.adaptive(
+                    value: _showChart,
+                    onChanged: (val) {
+                      setState(() {
+                        _showChart = val;
+                      });
+                    },
+                  )
+                ],
+              ),
+            if (!isLandscape)
+              Container(
+                height: (mq.size.height -
+                        appBar.preferredSize.height -
+                        mq.padding.top) *
+                    0.25,
+                child: Chart(_recentTransactions),
+              ),
+            if (!isLandscape) txListWidget,
+            if (isLandscape)
+              _showChart
+                  ? Container(
+                      height: (mq.size.height -
+                              appBar.preferredSize.height -
+                              mq.padding.top) *
+                          0.7,
+                      child: Chart(_recentTransactions),
+                    )
+                  : txListWidget
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _startAddNewTransaction(context),
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: _showChart && isLandscape
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _startAddNewTransaction(context),
+              child: Icon(Icons.add),
+            ),
     );
   }
 }
